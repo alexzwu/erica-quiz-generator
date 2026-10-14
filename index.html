@@ -794,8 +794,9 @@ function viewUnit(uid){
   if(!found){ app.innerHTML = '<p>Unit not found. <a href="#/">Home</a></p>'; return; }
   const {course, unit} = found;
   const mcMax=(unit.mcBank||[]).length, shMax=(unit.shortBank||[]).length;
-  const dMc = Math.min((unit.quizFormat||{}).mc||mcMax, mcMax);
-  const dSh = Math.min((unit.quizFormat||{}).short||shMax, shMax);
+  const existing = (quiz && quiz.uid===uid) ? quiz : null;
+  const dMc = existing ? existing.mcCount : Math.min((unit.quizFormat||{}).mc||mcMax, mcMax);
+  const dSh = existing ? existing.shortCount : Math.min((unit.quizFormat||{}).short||shMax, shMax);
   let h = '<a class="backlink" href="#/course/'+esc(course.id)+'">&larr; '+esc(course.name)+'</a>';
   h += '<header class="site"><h1>'+esc(unit.name)+'</h1><p>'+esc(unitCounts(unit))+' in the bank. Every quiz is a fresh random mix.</p></header>';
   h += '<div class="genbox noprint">'
@@ -812,7 +813,7 @@ function viewUnit(uid){
     renderQuiz();
   };
   document.getElementById('genBtn').onclick = go;
-  go(); // generate one right away
+  if(existing){ renderQuiz(); } else { go(); } // redisplay the current quiz, or generate one
 }
 
 function mcLetter(i){ return 'abcd'[i]; }
@@ -859,7 +860,7 @@ function renderQuiz(){
     generateQuiz(quiz.uid, nMc, nSh); renderQuiz();
   };
   document.getElementById('printBtn').onclick = ()=>window.print();
-  document.getElementById('keyBtn').onclick = renderKey;
+  document.getElementById('keyBtn').onclick = ()=>{ location.hash = '#/key'; };
   out.scrollIntoView();
 }
 
@@ -994,8 +995,9 @@ function route(){
   else if(parts[0]==='course') viewCourse(decodeURIComponent(parts[1]||''));
   else if(parts[0]==='unit') viewUnit(decodeURIComponent(parts[1]||''));
   else if(parts[0]==='manage') viewManage();
+  else if(parts[0]==='key'){ if(quiz){ renderKey(); } else { location.hash = '#/'; } }
   else viewHome();
-  if(parts[0]!=='unit') quiz = null;
+  if(parts[0]!=='unit' && parts[0]!=='key') quiz = null;
 }
 window.addEventListener('hashchange', route);
 route();
