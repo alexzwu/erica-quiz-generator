@@ -228,8 +228,8 @@ function viewGrade(g){
     + '</div>';
   if(g==='10'){
     const s1 = list.filter(c=>c.semester===1), s2 = list.filter(c=>c.semester===2);
-    if(s1.length) h += '<h2 style="margin:4px 0 10px">This semester</h2><div class="cards">'+s1.map(card).join('')+'</div>';
-    if(s2.length) h += '<h2 style="margin:20px 0 10px">Next semester</h2><div class="cards">'+s2.map(card).join('')+'</div>';
+    if(s1.length) h += '<h2 style="margin:4px 0 10px">Semester 1</h2><div class="cards">'+s1.map(card).join('')+'</div>';
+    if(s2.length) h += '<h2 style="margin:20px 0 10px">Semester 2</h2><div class="cards">'+s2.map(card).join('')+'</div>';
   } else {
     const label = g==='9' ? 'Grade 9 courses' : 'Grade '+g+' (planned)';
     h += '<h2 style="margin:4px 0 10px">'+label+'</h2><div class="cards">'+list.map(card).join('')+'</div>';
