@@ -38,6 +38,11 @@
   .btn.danger{background:#fff;color:#b91c1c;border:1px solid #fecaca;font-weight:500;padding:6px 12px;font-size:.85rem;}
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 18px;}
   .backlink{display:inline-block;margin-bottom:10px;color:var(--accent-dark);text-decoration:none;font-weight:600;}
+  .tabs{display:flex;gap:8px;margin:16px 0 20px;flex-wrap:wrap;}
+  .tab{padding:9px 20px;border-radius:999px;background:#fff;color:var(--ink);text-decoration:none;
+    font-weight:600;border:1px solid var(--line);}
+  .tab:hover{border-color:var(--accent);color:var(--accent-dark);}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
   .genbox{background:var(--card);border:1px solid var(--line);border-radius:12px;
     padding:16px;margin-bottom:18px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;}
   .genbox label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px;}
@@ -192,35 +197,44 @@ function generateQuiz(uid, mcCount, shortCount){
 }
 
 /* ---------- views ---------- */
-function viewHome(){
+function gradeOfCourse(c){
+  const s = c.semester;
+  return s===0?'9':(s===11?'11':(s===12?'12':'10'));
+}
+function viewGrade(g){
+  if(!['9','10','11','12'].includes(g)) g = '10';
   const courses = allCourses();
   const card = c=>'<div class="card"><h2>'+esc(c.name)+'</h2>'
       + '<p>'+(c.units||[]).length+' unit'+((c.units||[]).length===1?'':'s')+'</p>'
       + '<a class="btn" href="#/course/'+esc(c.id)+'">Open</a></div>';
-  const g1 = courses.filter(c=>c.semester===1), g2 = courses.filter(c=>c.semester===2),
-        g0 = courses.filter(c=>c.semester===0),
-        g11 = courses.filter(c=>c.semester===11), g12 = courses.filter(c=>c.semester===12);
+  const list = courses.filter(c=>gradeOfCourse(c)===g);
+  const tabs = [['10','Grade 10'],['9','Grade 9'],['11','Grade 11'],['12','Grade 12']];
   let h = '<header class="site"><h1>Erica\'s Practice Quiz Generator</h1>'
     + '<p>Pick a course, pick a unit, generate a quiz, print it. No more asking Dad.</p></header>';
+  h += '<div class="tabs">'+tabs.map(t=>'<a class="tab'+(t[0]===g?' active':'')+'" href="#/grade/'+t[0]+'">'+t[1]+'</a>').join('')+'</div>';
   h += '<div class="steps">'
     + '<div class="step"><b>1. Pick a course</b>Choose one of your school courses below.</div>'
     + '<div class="step"><b>2. Pick a unit</b>Each course lists the units you\'ve covered.</div>'
     + '<div class="step"><b>3. Generate &amp; print</b>A fresh mix of questions every time, with a separate answer key.</div>'
     + '</div>';
-  if(g1.length) h += '<h2 style="margin:4px 0 10px">This semester</h2><div class="cards">'+g1.map(card).join('')+'</div>';
-  if(g2.length) h += '<h2 style="margin:20px 0 10px">Next semester</h2><div class="cards">'+g2.map(card).join('')+'</div>';
-  if(g0.length) h += '<h2 style="margin:20px 0 10px">Grade 9</h2><div class="cards">'+g0.map(card).join('')+'</div>';
-  if(g11.length) h += '<h2 style="margin:20px 0 10px">Grade 11 (planned)</h2><div class="cards">'+g11.map(card).join('')+'</div>';
-  if(g12.length) h += '<h2 style="margin:20px 0 10px">Grade 12 (planned)</h2><div class="cards">'+g12.map(card).join('')+'</div>';
+  if(g==='10'){
+    const s1 = list.filter(c=>c.semester===1), s2 = list.filter(c=>c.semester===2);
+    if(s1.length) h += '<h2 style="margin:4px 0 10px">This semester</h2><div class="cards">'+s1.map(card).join('')+'</div>';
+    if(s2.length) h += '<h2 style="margin:20px 0 10px">Next semester</h2><div class="cards">'+s2.map(card).join('')+'</div>';
+  } else {
+    const label = g==='9' ? 'Grade 9 courses' : 'Grade '+g+' (planned)';
+    h += '<h2 style="margin:4px 0 10px">'+label+'</h2><div class="cards">'+list.map(card).join('')+'</div>';
+  }
   h += '<div class="toolbar"><a class="btn ghost" href="#/manage">Manage courses &amp; questions</a></div>';
   h += '<footer class="site">Stage 1: quiz generation. Review notes coming later.</footer>';
   app.innerHTML = h;
+  window.scrollTo(0,0);
 }
 
 function viewCourse(id){
   const c = findCourse(id);
   if(!c){ app.innerHTML = '<p>Course not found. <a href="#/">Home</a></p>'; return; }
-  let h = '<a class="backlink" href="#/">&larr; All courses</a>';
+  let h = '<a class="backlink" href="#/grade/'+gradeOfCourse(c)+'">&larr; All courses</a>';
   h += '<header class="site"><h1>'+esc(c.name)+'</h1><p>Pick a unit to generate a practice quiz.</p></header>';
   for(const u of (c.units||[])){
     const nq = (u.mcBank||[]).length + (u.shortBank||[]).length;
@@ -435,12 +449,13 @@ function viewManage(){
 function route(){
   const hsh = location.hash || '#/';
   const parts = hsh.replace(/^#\//,'').split('/');
-  if(parts[0]==='' ) viewHome();
+  if(parts[0]==='' ){ location.hash = '#/grade/10'; return; }
+  else if(parts[0]==='grade') viewGrade(decodeURIComponent(parts[1]||'10'));
   else if(parts[0]==='course') viewCourse(decodeURIComponent(parts[1]||''));
   else if(parts[0]==='unit') viewUnit(decodeURIComponent(parts[1]||''));
   else if(parts[0]==='manage') viewManage();
-  else if(parts[0]==='key'){ if(quiz){ renderKey(); } else { location.hash = '#/'; } }
-  else viewHome();
+  else if(parts[0]==='key'){ if(quiz){ renderKey(); } else { location.hash = '#/grade/10'; } }
+  else { location.hash = '#/grade/10'; return; }
   if(parts[0]!=='unit' && parts[0]!=='key') quiz = null;
 }
 window.addEventListener('hashchange', route);
