@@ -210,16 +210,17 @@ function generateQuiz(uid, mcCount, shortCount){
 function gradeOfCourse(c){
   const s = c.semester;
   if(s==='ec') return 'ec';
+  if(s==='ap') return 'ap';
   return s===0?'9':(s===11?'11':(s===12?'12':'10'));
 }
 function viewGrade(g){
-  if(!['9','10','11','12','ec'].includes(g)) g = '10';
+  if(!['9','10','11','12','ec','ap'].includes(g)) g = '10';
   const courses = allCourses();
   const card = c=>'<div class="card"><h2>'+esc(c.name)+'</h2>'
       + '<p>'+(c.units||[]).length+' unit'+((c.units||[]).length===1?'':'s')+'</p>'
       + '<a class="btn" href="#/course/'+esc(c.id)+'">Open</a></div>';
   const list = courses.filter(c=>gradeOfCourse(c)===g);
-  const tabs = [['9','Grade 9'],['10','Grade 10'],['11','Grade 11'],['12','Grade 12'],['ec','Extracurriculars']];
+  const tabs = [['9','Grade 9'],['10','Grade 10'],['11','Grade 11'],['12','Grade 12'],['ec','Extracurriculars'],['ap','AP Courses']];
   let h = '<header class="site"><h1>Erica\'s Practice Quiz Generator</h1>'
     + '<p>Pick a course, pick a unit, generate a quiz, print it. No more asking Dad.</p></header>';
   h += '<div class="tabs">'+tabs.map(t=>'<a class="tab'+(t[0]===g?' active':'')+'" href="#/grade/'+t[0]+'">'+t[1]+'</a>').join('')+'</div>';
@@ -233,7 +234,7 @@ function viewGrade(g){
     if(s1.length) h += '<h2 style="margin:4px 0 10px">Semester 1</h2><div class="cards">'+s1.map(card).join('')+'</div>';
     if(s2.length) h += '<h2 style="margin:20px 0 10px">Semester 2</h2><div class="cards">'+s2.map(card).join('')+'</div>';
   } else {
-    const label = g==='9' ? 'Grade 9 courses' : (g==='ec' ? 'Extracurriculars' : 'Grade '+g+' (planned)');
+    const label = g==='9' ? 'Grade 9 courses' : (g==='ec' ? 'Extracurriculars' : (g==='ap' ? 'AP Courses' : 'Grade '+g+' (planned)'));
     h += '<h2 style="margin:4px 0 10px">'+label+'</h2><div class="cards">'+list.map(card).join('')+'</div>';
   }
   h += '<div class="toolbar"><a class="btn ghost" href="#/manage">Manage courses &amp; questions</a></div>';
